@@ -1,8 +1,6 @@
 # AI-code
 我用 AI 写的一些代码
-
-1. 下载 APP logo 网站：
-2. GitHub DeepWiki 脚本
+[TOC]
 
 
 ## download_logo 项目介绍
