@@ -5,6 +5,8 @@
   * [download_logo 项目介绍](#download-logo-----)
   * [GitHub DeepWiki 油猴脚本 介绍](#github-deepwiki--------)
   * [Prompt 管理工具介绍](#prompt-------)
+  * [json提取网站](#json------)
+
 
 
 
@@ -34,3 +36,10 @@
 ![CleanShot 2025-04-29 at 21 48 44@2x](https://github.com/user-attachments/assets/12e72205-1ad0-42b8-9c4f-88f9e97d35db)
 ![CleanShot 2025-04-29 at 21 48 53@2x](https://github.com/user-attachments/assets/5155a522-25e2-4772-a70a-2619bbc16ccc)
 
+## json提取网站
+- **体验地址**：https://mcp.edgeone.site/share/O8YK1egGtuy8OONNWwY_C
+- **功能介绍**：可以提取一段内容中的json代码，并且可以格式化和高亮显示。去除markdown格式中的<```>等内容；一些无关的表达内容，比如“已经为您生成以下Json内容”。支持功能：
+  - 填写需要处理的json内容，点击「提取并格式化JSON」
+  - 会生成处理后的json内容，并且会进行格式化和高亮显示，并且支持了点击「复制」直接复制生成后的json内容。
+- **效果展示**：
+![image](https://raw.githubusercontent.com/askfanxiaojun/img/master/images/2025/05/06/23-04-06-CleanShot%202025-05-06%20at%2022.56.04-2x.png)

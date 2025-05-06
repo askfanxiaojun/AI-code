@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON内容提取工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --error-color: #f72585;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .description {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #6c757d;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: border-color 0.3s;
+            background-color: #f8f9fa;
+            min-height: 200px; /* 增加输入框高度 */
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        .json-container {
+            position: relative;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            min-height: 200px;
+            max-height: 400px;
+            overflow: auto;
+        }
+        
+        #json-content {
+            padding: 1rem;
+            white-space: pre;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #495057;
+            margin: 0;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .copy-btn:hover {
+            background: #f1f1f1;
+        }
+        
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .status {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .success {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .error {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--error-color);
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .string { color: #28a745; }
+        .number { color: #d63384; }
+        .boolean { color: #007bff; }
+        .null { color: #6c757d; }
+        .key { color: #6610f2; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON内容提取工具</h1>
+        <p class="description">从任意文本中提取并格式化JSON内容</p>
+        
+        <div class="input-group">
+            <label for="original-content">输入文本（包含JSON）:</label>
+            <textarea id="original-content" placeholder="在此粘贴包含JSON的文本..."></textarea>
+        </div>
+        
+        <button id="extract-btn" class="btn">提取并格式化JSON</button>
+        
+        <div id="status-message" class="status"></div>
+        
+        <div class="input-group">
+            <label for="json-content">格式化后的JSON:</label>
+            <div class="json-container">
+                <button id="copy-btn" class="copy-btn" title="复制JSON">
+                    <i class="far fa-copy"></i> 复制
+                </button>
+                <pre id="json-content"></pre>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 JSON提取工具 | 双击JSON内容可全选</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const originalContent = document.getElementById('original-content');
+            const extractBtn = document.getElementById('extract-btn');
+            const jsonContent = document.getElementById('json-content');
+            const statusMessage = document.getElementById('status-message');
+            const copyBtn = document.getElementById('copy-btn');
+            
+            // 添加事件监听器
+            extractBtn.addEventListener('click', extractJsonContent);
+            copyBtn.addEventListener('click', copyJsonToClipboard);
+            
+            // 双击JSON内容可全选
+            jsonContent.addEventListener('dblclick', function() {
+                const range = document.createRange();
+                range.selectNodeContents(jsonContent);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
+            
+            // 提取JSON内容函数
+            function extractJsonContent() {
+                const originalText = originalContent.value.trim();
+                
+                // 重置状态消息
+                statusMessage.style.display = 'none';
+                statusMessage.className = 'status';
+                jsonContent.textContent = '';
+                
+                if (!originalText) {
+                    showStatus('请输入包含JSON的文本', 'error');
+                    return;
+                }
+                
+                try {
+                    // 使用更精确的正则表达式提取JSON内容
+                    const jsonRegex = /(\{(?:[^{}]|(?:\{[^{}]*\}))*\}|\[(?:[^\[\]]|(?:\{[^{}]*\}))*\])/;
+                    const match = originalText.match(jsonRegex);
+                    
+                    if (match) {
+                        const jsonData = JSON.parse(match[0]);
+                        const formattedJson = JSON.stringify(jsonData, null, 4);
+                        
+                        // 使用语法高亮显示JSON
+                        jsonContent.innerHTML = syntaxHighlight(formattedJson);
+                        showStatus('JSON提取并格式化成功！', 'success');
+                    } else {
+                        showStatus('未找到有效的JSON内容', 'error');
+                    }
+                } catch (error) {
+                    showStatus(`解析JSON内容失败: ${error.message}`, 'error');
+                    console.error('解析JSON内容失败:', error);
+                }
+            }
+            
+            // 复制JSON到剪贴板
+            function copyJsonToClipboard() {
+                const textToCopy = jsonContent.innerText;
+                
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // 临时改变按钮样式和文本
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                    copyBtn.style.background = 'var(--success-color)';
+                    copyBtn.style.color = 'white';
+                    
+                    // 3秒后恢复原状
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.style.background = 'rgba(255, 255, 255, 0.8)';
+                        copyBtn.style.color = 'inherit';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    showStatus('复制失败，请手动选择并复制', 'error');
+                });
+            }
+            
+            // 显示状态消息
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status ${type}`;
+                statusMessage.style.display = 'block';
+            }
+            
+            // JSON语法高亮
+            function syntaxHighlight(json) {
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'key';
+                        } else {
+                            cls = 'string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
