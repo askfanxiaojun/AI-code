@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>App Logo Finder</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1d1d1f;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .search-input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .search-type {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-type button {
+            background-color: transparent;
+            color: #86868b;
+            border: 1px solid #d2d2d7;
+            padding: 8px 16px;
+        }
+
+        .search-type button.active {
+            background-color: #0071e3;
+            color: white;
+            border-color: #0071e3;
+        }
+
+        input {
+            padding: 12px 20px;
+            width: 300px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #0071e3;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0077ED;
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .app-result {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .app-result:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background-color: rgba(0, 113, 227, 0.9);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            min-width: 80px;
+        }
+
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(0, 113, 227, 1);
+            transform: scale(1.1);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .app-result:hover {
+            transform: translateY(-5px);
+        }
+
+        .app-result img {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+        }
+
+        .app-result h3 {
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .app-result p {
+            color: #86868b;
+            font-size: 0.9em;
+        }
+
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #86868b;
+        }
+
+        /* 错误提示 */
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff3b30;
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 600px) {
+            .search-box {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            input {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>App Logo & 网站图标查找器</h1>
+        <div class="search-box">
+            <div class="search-type">
+                <button id="appSearchBtn" class="active" onclick="switchSearchType('app')">App Logo</button>
+                <button id="websiteSearchBtn" onclick="switchSearchType('website')">网站图标</button>
+            </div>
+            <div class="search-input-group">
+                <input type="text" id="searchInput" placeholder="输入App名称">
+                <button onclick="startSearch()">搜索</button>
+            </div>
+        </div>
+        <div id="results"></div>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #d2d2d7; display: flex; justify-content: center; gap: 20px; font-size: 14px; color: #86868b;">
+            <div>作者：Sean</div>
+            <div><a href="https://aiproduct.addpotion.com" style="color: #0071e3; text-decoration: none;">SeanのAi研究学习站</a></div>
+        </div>
+    </div>
+
+    <script>
+        let currentSearchType = 'app';
+
+        // 检查资源是否存在
+        async function checkResourceExists(url) {
+            try {
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    headers: { 'Range': 'bytes=0-1' } // 仅请求部分内容提高效率
+                });
+                return response.ok && response.headers.get('content-type')?.startsWith('image/');
+            } catch {
+                return false;
+            }
+        }
+
+        // 获取网站图标
+        async function getFaviconUrl(domain, url) {
+            const localPaths = [
+                `${url}/apple-touch-icon.png`,
+                `${url}/apple-touch-icon-precomposed.png`,
+                `${url}/favicon.ico`,
+                `${url}/favicon.png`
+            ];
+
+            // 检查本地路径
+            for (const iconUrl of localPaths) {
+                if (await checkResourceExists(iconUrl)) {
+                    return iconUrl;
+                }
+            }
+
+            // 优先使用Google的favicon服务
+            const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=256`;
+            try {
+                if (await checkResourceExists(googleFaviconUrl)) {
+                    return googleFaviconUrl;
+                }
+            } catch (error) {
+                console.log('Failed to fetch from Google Favicon service:', error);
+            }
+
+            // 其他第三方服务作为备选
+            const thirdPartyServices = [
+                `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+                `https://api.faviconkit.com/${domain}/256`,
+                `https://favicone.com/${domain}`,
+                `https://www.${domain}/favicon.ico`
+            ];
+
+            for (const serviceUrl of thirdPartyServices) {
+                try {
+                    if (await checkResourceExists(serviceUrl)) {
+                        return serviceUrl;
+                    }
+                } catch (error) {
+                    console.log(`Failed to fetch icon from ${serviceUrl}:`, error);
+                    continue;
+                }
+            }
+
+            // 最终回退方案 - 使用内置的默认图标（base64编码）
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI2NCIgZmlsbD0iI2YwZjBmMCIvPjxwYXRoIGQ9Ik04NSAxOTBoODZNODUgMTI4aDg2TTg1IDY2aDg2IiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==';
+        }
+
+        function switchSearchType(type) {
+            currentSearchType = type;
+            const searchInput = document.getElementById('searchInput');
+            const appSearchBtn = document.getElementById('appSearchBtn');
+            const websiteSearchBtn = document.getElementById('websiteSearchBtn');
+
+            if (type === 'app') {
+                searchInput.placeholder = '输入App名称';
+                appSearchBtn.classList.add('active');
+                websiteSearchBtn.classList.remove('active');
+            } else {
+                searchInput.placeholder = '输入网站链接 (例如: www.example.com)';
+                appSearchBtn.classList.remove('active');
+                websiteSearchBtn.classList.add('active');
+            }
+        }
+
+        function startSearch() {
+            if (currentSearchType === 'app') {
+                searchApp();
+            } else {
+                searchWebsite();
+            }
+        }
+
+        async function searchWebsite() {
+    const websiteUrl = document.getElementById('searchInput').value.trim();
+    const resultsDiv = document.getElementById('results');
+    
+    if (!websiteUrl) {
+        showToast('请输入网站链接');
+        return;
+    }
+
+    resultsDiv.innerHTML = '<div class="loading">正在提取图标...</div>';
+    
+    try {
+        // 构建完整URL
+        let url = websiteUrl;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
+
+        // 提取域名
+        let domain;
+        try {
+            domain = new URL(url).hostname;
+        } catch (e) {
+            throw new Error('无效的URL格式');
+        }
+        
+        // 直接使用Google的favicon服务 - 更可靠
+        const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=256`;
+        
+        // 创建结果元素并显示
+        resultsDiv.innerHTML = '';
+        const appDiv = document.createElement('div');
+        appDiv.className = 'app-result';
+        appDiv.innerHTML = `
+            <div class="action-buttons">
+                <button class="action-btn" onclick="saveImage('${iconUrl}', '${domain}')" title="保存图片">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    保存
+                </button>
+                <button class="action-btn" onclick="copyImageUrl('${iconUrl}')" title="复制链接">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    复制
+                </button>
+            </div>
+            <img src="${iconUrl}" alt="${domain} icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI2NCIgZmlsbD0iI2YwZjBmMCIvPjxwYXRoIGQ9Ik04NSAxOTBoODZNODUgMTI4aDg2TTg1IDY2aDg2IiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='">
+            <h3>${domain}</h3>
+            <p>网站图标</p>
+        `;
+        resultsDiv.appendChild(appDiv);
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="error">提取图标失败: ${error.message}</div>`;
+        console.error('Error:', error);
+    }
+}
+
+
+        // 添加回车键搜索功能
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startSearch();
+            }
+        });
+        async function searchApp() {
+            const appName = document.getElementById('searchInput').value;
+            const resultsDiv = document.getElementById('results');
+            
+            // 显示加载状态
+            resultsDiv.innerHTML = '<div class="loading">正在搜索中...</div>';
+            
+            const url = `https://itunes.apple.com/search?term=${encodeURIComponent(appName)}&entity=software&limit=12`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = ''; // 清空加载状态
+                
+                if (data.results.length > 0) {
+                    data.results.forEach(app => {
+                        const appDiv = document.createElement('div');
+                        appDiv.className = 'app-result';
+                        appDiv.innerHTML = `
+                            <div class="action-buttons">
+                                <button class="action-btn" onclick="saveImage('${app.artworkUrl512 || app.artworkUrl100}', '${app.trackName}')" title="保存图片">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    保存
+                                </button>
+                                <button class="action-btn" onclick="copyImageUrl('${app.artworkUrl512 || app.artworkUrl100}')" title="复制链接">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    复制
+                                </button>
+                            </div>
+                            <img src="${app.artworkUrl512 || app.artworkUrl100}" alt="${app.trackName}">
+                            <h3>${app.trackName}</h3>
+                            <p>${app.sellerName}</p>
+                        `;
+                        resultsDiv.appendChild(appDiv);
+                    });
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">未找到相关应用</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">搜索出错，请稍后重试</div>';
+                console.error('Error:', error);
+            }
+        }
+
+        // 添加提示框元素
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+
+        // 显示提示信息
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 保存图片
+        async function saveImage(url, name) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${name}_logo.png`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast('图片已保存');
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('保存失败，请重试');
+            }
+        }
+
+        // 复制图片链接
+        function copyImageUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('图片链接已复制');
+            }).catch(() => {
+                showToast('复制失败，请重试');
+            });
+        }
+    </script>
+</body>
+</html>
